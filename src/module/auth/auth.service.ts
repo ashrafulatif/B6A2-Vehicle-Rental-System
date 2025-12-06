@@ -1,5 +1,7 @@
 import { pool } from "../../config/db";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import config from "../../config";
 
 const registerUser = async (payload: Record<string, unknown>) => {
   const { name, email, password, phone, role } = payload;
@@ -15,9 +17,40 @@ const registerUser = async (payload: Record<string, unknown>) => {
 };
 
 const loginUser = async (email: string, password: string) => {
-    
+  //find with email
+  const result = await pool.query(`SELECT * FROM Users WHERE email = $1`, [
+    email,
+  ]);
+
+  if (result.rows.length === 0) return null;
+
+  const { password: dbPassword, ...user } = result.rows[0];
+
+  //match pass
+  const match = await bcrypt.compare(password, dbPassword);
+
+  if (!match) {
+    return false;
+  }
+  //gen token
+
+  const payload = {
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  const token = jwt.sign(payload, config.jwtSecret as string, {
+    expiresIn: "5d",
+  });
+
+  return {
+    token,
+    user,
+  };
 };
 
 export const authServices = {
   registerUser,
+  loginUser,
 };

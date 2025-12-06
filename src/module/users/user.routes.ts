@@ -1,13 +1,17 @@
 import { Router } from "express";
+import authMiddleware from "../../middleware/authMiddleware";
+import { userController } from "./user.controller";
 
 const router = Router();
 
-router.get("/");
+router.get("/", authMiddleware("admin"), userController.getAllUsers);
 
-router.post("/");
+router.put(
+  "/:userId",
+  authMiddleware("admin", "customer"),
+  userController.updateUser
+);
 
-router.put("/:userId");
-
-router.delete("/:userId");
+router.delete("/:userId", authMiddleware("admin"), userController.updateUser);
 
 export const userRouter = router;
