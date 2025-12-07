@@ -30,7 +30,7 @@ const loginUser = async (email: string, password: string) => {
   const match = await bcrypt.compare(password, dbPassword);
 
   if (!match) {
-    return false;
+    throw new Error("Invalid Credentials!");
   }
   //gen token
 

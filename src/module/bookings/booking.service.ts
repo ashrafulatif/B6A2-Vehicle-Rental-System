@@ -1,4 +1,5 @@
 import { pool } from "../../config/db";
+import { bookingHelper } from "../../helpers/bookingHelper";
 import { formatResponse } from "../../helpers/formatResponse";
 
 const createBooking = async (payload: Record<string, unknown>) => {
@@ -18,12 +19,11 @@ const createBooking = async (payload: Record<string, unknown>) => {
   if (availability_status === "booked") {
     throw new Error("Vehicle id not available");
   }
-  //cacl in days
-  const startDate = new Date(rent_start_date as string);
-  const endDate = new Date(rent_end_date as string);
-
-  const diffInMs = endDate.getTime() - startDate.getTime();
-  const duration = diffInMs / (1000 * 60 * 60 * 24);
+  //bookin days
+  const duration = bookingHelper.calculateDays(
+    rent_start_date as string,
+    rent_end_date as string
+  );
 
   if (duration <= 0) {
     throw new Error("End date must be after start date");
@@ -60,6 +60,9 @@ const createBooking = async (payload: Record<string, unknown>) => {
 };
 
 const getAllBookings = async (userId: number, userRole: string) => {
+  //auto update bookin
+  await autoUpdateExpiredBookings();
+
   if (userRole === "admin") {
     const result = await pool.query(`SELECT 
         b.*,
@@ -106,6 +109,10 @@ const updateBooking = async (
   status: string,
   bookingId: string
 ) => {
+  //auto update expire booking
+  const count = await autoUpdateExpiredBookings();
+  console.log(`${count} bookings were updated`);
+
   const bookingResult = await pool.query(
     `SELECT * FROM Bookings WHERE id = $1`,
     [bookingId]
@@ -166,9 +173,7 @@ const updateBooking = async (
       [booking.vehicle_id]
     );
 
-    const curVehicleStatus = getVehicleStatus.rows[0].availability_status
-      ? "available"
-      : "booked";
+    const curVehicleStatus = getVehicleStatus.rows[0].availability_status;
 
     return {
       booking: {
@@ -181,6 +186,31 @@ const updateBooking = async (
     };
   }
   throw new Error("Unauthorized action. Not allowed to perform this action");
+};
+
+//auto update func
+const autoUpdateExpiredBookings = async () => {
+  const currentDate = new Date().toISOString().split("T")[0];
+
+  const result = await pool.query(
+    `UPDATE Bookings
+    SET status = $1
+    WHERE status = $2
+    AND rent_end_date < $3
+    RETURNING id, vehicle_id
+    `,
+    ["returned", "active", currentDate]
+  );
+
+  //update vhehile status
+  for (const booking of result.rows) {
+    await pool.query(
+      `UPDATE Vehicles SET availability_status = $1 WHERE id = $2`,
+      ["available", booking.vehicle_id]
+    );
+  }
+
+  return result.rows.length;
 };
 
 export const bookingService = {

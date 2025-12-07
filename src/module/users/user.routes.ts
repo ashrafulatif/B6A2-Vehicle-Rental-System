@@ -1,17 +1,22 @@
 import { Router } from "express";
 import authMiddleware from "../../middleware/authMiddleware";
 import { userController } from "./user.controller";
+import { Roles } from "../auth/auth.constant";
 
 const router = Router();
 
-router.get("/", authMiddleware("admin"), userController.getAllUsers);
+router.get("/", authMiddleware(Roles.admin), userController.getAllUsers);
 
 router.put(
   "/:userId",
-  authMiddleware("admin", "customer"),
+  authMiddleware(Roles.admin, Roles.customer),
   userController.updateUser
 );
 
-router.delete("/:userId", authMiddleware("admin"), userController.deleteUser);
+router.delete(
+  "/:userId",
+  authMiddleware(Roles.admin),
+  userController.deleteUser
+);
 
 export const userRouter = router;
