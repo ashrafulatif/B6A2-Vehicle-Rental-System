@@ -10,8 +10,18 @@ app.use(express.json());
 
 initDB();
 
+//root
 app.get("/", (req: Request, res: Response) => {
-  res.send("Vehicles Rental Systems");
+  res.json({
+    success: true,
+    message: "Vehicle Rental System API ",
+    endpoints: {
+      auth: "/api/v1/auth",
+      users: "/api/v1/users",
+      vehicles: "/api/v1/vehicles",
+      bookings: "/api/v1/bookings",
+    },
+  });
 });
 
 //auth
