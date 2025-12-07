@@ -12,6 +12,6 @@ router.put(
   userController.updateUser
 );
 
-router.delete("/:userId", authMiddleware("admin"), userController.updateUser);
+router.delete("/:userId", authMiddleware("admin"), userController.deleteUser);
 
 export const userRouter = router;

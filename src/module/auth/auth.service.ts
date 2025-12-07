@@ -35,6 +35,7 @@ const loginUser = async (email: string, password: string) => {
   //gen token
 
   const payload = {
+    id: user.id,
     name: user.name,
     email: user.email,
     role: user.role,

@@ -4,7 +4,6 @@ import { authServices } from "./auth.service";
 const registerUser = async (req: Request, res: Response) => {
   try {
     const result = await authServices.registerUser(req.body);
-    console.log(result);
 
     //remove pass
     const { password, ...validResponse } = result.rows[0];

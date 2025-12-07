@@ -5,12 +5,10 @@ const getAllUsers = async (req: Request, res: Response) => {
   try {
     const result = await userService.getAllUsers();
 
-    console.log(result);
-
     if (result.rows.length === 0) {
-      res.status(404).json({
+      res.status(200).json({
         success: false,
-        message: "No data found",
+        message: "No users found",
       });
     }
     res.status(200).json({
@@ -28,16 +26,21 @@ const getAllUsers = async (req: Request, res: Response) => {
 
 const updateUser = async (req: Request, res: Response) => {
   try {
+    const loggedId = req.user?.id;
+    const userRole = req.user?.role;
     const { name, email, phone, role } = req.body;
 
     const result = await userService.updateUser(
+      req.params.userId as string,
+      loggedId,
+      userRole,
       name,
       email,
       phone,
-      role,
-      req.params.id as string
+      role
     );
-    if (result.rows.length === 0) {
+
+    if (result.rowCount === 0) {
       res.status(404).json({
         success: false,
         message: `users not found`,
@@ -59,7 +62,7 @@ const updateUser = async (req: Request, res: Response) => {
 
 const deleteUser = async (req: Request, res: Response) => {
   try {
-    const result = await userService.deleteUser(req.params.id as string);
+    const result = await userService.deleteUser(req.params.userId as string);
 
     if (result.rowCount === 0) {
       res.status(404).json({
